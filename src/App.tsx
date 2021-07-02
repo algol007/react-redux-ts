@@ -1,12 +1,9 @@
-import React from 'react';
-import logo from './logo.svg';
+import Router from './routes';
 
-function App() {
-  return (
-    <div className="App">
-      <p className="text-5xl text-red-500">Hello World</p>
-    </div>
-  );
-}
+interface Props {}
+
+const App = ({  }: Props) => {
+  return <Router />;
+};
 
 export default App;
