@@ -1,8 +1,8 @@
 import Router from './routes';
 
-interface Props {}
+// interface Props {}
 
-const App = ({  }: Props) => {
+const App = () => {
   return <Router />;
 };
 

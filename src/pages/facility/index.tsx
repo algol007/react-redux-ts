@@ -3,17 +3,17 @@ import Sidebar from '../../components/Layout/Sidebar';
 
 interface Props extends RouteComponentProps {}
 
-const Profile = ({ history }: Props) => {
+const Facility = ({ history }: Props) => {
     return (
         <>
             <div className="flex">
                 <Sidebar />
                 <main className="p-8">
-                    <h1 className="text-5xl font-bold">Ini Profile</h1>
+                    <h1 className="text-5xl font-bold">Ini Facility</h1>
                 </main>
             </div>
         </>
     )
 }
 
-export default Profile
+export default Facility
