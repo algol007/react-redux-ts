@@ -8,8 +8,10 @@ const Profile = ({ history }: Props) => {
         <>
             <div className="flex">
                 <Sidebar />
-                <main className="p-8">
-                    <h1 className="text-5xl font-bold">Ini Profile</h1>
+                <main className="p-8 w-full">
+                <h1 className="font-bold text-gray-400">Dashboard / Profile</h1>
+                    <div className="flex mt-12">
+                    </div>
                 </main>
             </div>
         </>
