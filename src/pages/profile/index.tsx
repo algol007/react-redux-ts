@@ -1,15 +1,19 @@
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
+import Sidebar from '../../components/Layout/Sidebar';
 
 interface Props extends RouteComponentProps {}
 
 const Profile = ({ history }: Props) => {
     return (
         <>
-            <h1 className="text-5xl font-bold">Profile Page</h1>
-            {/* <a onClick={history.goBack}>Previous Page</a> */}
-            <br />
-            <Link to="/" className="mr-2 text-blue-500 underline">Dashboard</Link>
-            <Link to="/profile" className="text-blue-500 underline">Profile</Link>
+            <div className="flex">
+                <Sidebar />
+                <main className="p-8 w-full">
+                <h1 className="font-bold text-gray-400">Dashboard / Profile</h1>
+                    <div className="flex mt-12">
+                    </div>
+                </main>
+            </div>
         </>
     )
 }
