@@ -2,17 +2,20 @@ import { useEffect, useState } from "react";
 import { RouteComponentProps } from "react-router-dom";
 import Sidebar from "../../components/Layout/Sidebar";
 import Table from "../../components/Table";
+import Swal from "sweetalert2";
+import * as Notification from "../../components/Notification";
 
 interface Props extends RouteComponentProps {}
 
 const Facility = ({ history }: Props) => {
   const [facilities, setFacilities] = useState<any[]>([]);
+  // const [show, setShow] = useState<boolean>(false);
 
   useEffect(() => {
-    getBookingData("valid_example_token");
+    getFacilityData("valid_example_token");
   }, []);
 
-  const getBookingData = (token: string) => {
+  const getFacilityData = (token: string) => {
     fetch("http://localhost:5000/facilities", {
       method: "GET",
       headers: {
@@ -28,13 +31,29 @@ const Facility = ({ history }: Props) => {
       .catch((err) => alert("Failed to get data booking!"));
   };
 
+  const deleteFacility = () => {
+    Notification.Confirmation();
+  };
+
+  const addFacility = () => {
+    console.log("Hello");
+  };
+
   return (
     <>
       <div className="flex">
         <Sidebar />
         <main className="p-8 w-full">
           <h1 className="font-bold text-gray-400">Dashboard / Facility</h1>
-          <div className="flex mt-12">
+          <div className="flex">
+            <button
+              className="bg-red-500 py-2 px-4 rounded text-sm font-bold text-white my-8"
+              onClick={addFacility}
+            >
+              Add Facility
+            </button>
+          </div>
+          <div className="flex">
             <Table>
               <thead className="bg-media">
                 <tr className="bg-red-500 text-white">
@@ -105,6 +124,7 @@ const Facility = ({ history }: Props) => {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            onClick={deleteFacility}
                           >
                             <path
                               strokeLinecap="round"
