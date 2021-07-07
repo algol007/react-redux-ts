@@ -14,6 +14,7 @@ export const Input = (props: any) => (
       className={`border py-2 px-3 ${props.className && props.className}`}
       placeholder={props.placeholder}
       onChange={props.onChange}
+      disabled={props.disabled}
     />
   </div>
 );

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RouteComponentProps } from "react-router-dom";
 import Sidebar from "../../components/Layout/Sidebar";
 import Table from "../../components/Table";
+import moment from "moment";
 
 interface Props extends RouteComponentProps {}
 
@@ -67,7 +68,7 @@ const Booking = ({ history }: Props) => {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {bookings &&
                   bookings.map((data, idx) => (
-                    <tr>
+                    <tr key={data.id}>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-center text-gray-500">
                         {idx + 1}
                       </td>
@@ -78,7 +79,7 @@ const Booking = ({ history }: Props) => {
                         {data.facility.name}
                       </td>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {data.schedule}
+                        {moment(data.schedule).format("llll")}
                       </td>
                       <td className="pr-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex">

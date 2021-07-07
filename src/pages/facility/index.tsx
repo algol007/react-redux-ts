@@ -174,7 +174,14 @@ const Facility = ({ history }: Props) => {
           ""
         )}
         {showModalEdit ? (
-          <ActionFacility closeModal={showEditFacility} action="edit" />
+          <ActionFacility
+            closeModal={showEditFacility}
+            action="edit"
+            onRefresh={() => {
+              setRefresh(refresh + 1);
+              setShowModalEdit(false);
+            }}
+          />
         ) : (
           ""
         )}
@@ -193,7 +200,6 @@ export const ActionFacility = (props: any) => {
   const { action }: any = props;
 
   useEffect(() => {
-    console.log(action);
     if (action === "edit") {
       getFacilityById(id);
     }
@@ -217,18 +223,20 @@ export const ActionFacility = (props: any) => {
       }
     )
       .then((response) => response.json())
-      .then((json) => {
-        console.log(json.data);
+      .then(() => {
         Notification.Success({
           icon: "success",
-          title: "New Facility has been added!",
+          title:
+            action === "edit"
+              ? "Facility updated!"
+              : "New Facility has been added!",
         });
+        props.onRefresh();
       })
-      .catch(() => alert("Failed to add facility!"));
+      .catch(() => alert("Failed to add/edit facility!"));
   };
 
   const getFacilityById = async (id: string) => {
-    console.log("masuk sini");
     await fetch(`http://localhost:5000/facilities/${id}`, {
       method: "GET",
       headers: {
@@ -238,7 +246,9 @@ export const ActionFacility = (props: any) => {
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json.data);
+        setName(json.facility.name);
+        setAddress(json.facility.address);
+        setType(json.facility.type);
       })
       .catch(() => alert("Failed to get facility!"));
   };
@@ -251,6 +261,7 @@ export const ActionFacility = (props: any) => {
             label="Facility Name"
             name="name"
             placeholder="Facility Name"
+            defaultValue={name && name}
             onChange={(e: any) => setName(e.target.value)}
           />
         </div>
@@ -258,6 +269,7 @@ export const ActionFacility = (props: any) => {
           <Form.Input
             name="address"
             placeholder="Address"
+            defaultValue={address && address}
             onChange={(e: any) => setAddress(e.target.value)}
           />
         </div>

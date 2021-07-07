@@ -22,7 +22,6 @@ const User = ({ history }: Props) => {
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json.data);
         setUsers(json.data);
       })
       .catch((err) => alert("Failed to get data booking!"));
@@ -32,7 +31,7 @@ const User = ({ history }: Props) => {
     <>
       <div className="flex">
         <Sidebar />
-        <main className="p-8 w-full">
+        <main className="p-8 lg:w-1/2 w-full">
           <h1 className="font-bold text-gray-400">Dashboard / User</h1>
           <div className="flex mt-12">
             <Table>
@@ -56,15 +55,15 @@ const User = ({ history }: Props) => {
                   >
                     Email
                   </th>
-                  <th scope="col" className="relative pr-4 py-3">
+                  {/* <th scope="col" className="relative pr-4 py-3">
                     <span className="sr-only">Edit</span>
-                  </th>
+                  </th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {users &&
                   users.map((data, idx) => (
-                    <tr>
+                    <tr key={data.id}>
                       <td className="pr-4 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                         {idx + 1}
                       </td>
@@ -74,7 +73,7 @@ const User = ({ history }: Props) => {
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {data.email}
                       </td>
-                      <td className="pr-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {/* <td className="pr-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -105,7 +104,7 @@ const User = ({ history }: Props) => {
                             />
                           </svg>
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
               </tbody>
