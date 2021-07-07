@@ -2,21 +2,28 @@ import { useEffect, useState } from "react";
 import { RouteComponentProps } from "react-router-dom";
 import Sidebar from "../../components/Layout/Sidebar";
 import Table from "../../components/Table";
-import Swal from "sweetalert2";
+import * as Button from "../../components/Button";
+import * as Form from "../../components/Form";
+import { Modal } from "../../components/Modal";
 import * as Notification from "../../components/Notification";
+// import { getFacilities } from "../../store/facility/actions";
 
 interface Props extends RouteComponentProps {}
 
 const Facility = ({ history }: Props) => {
   const [facilities, setFacilities] = useState<any[]>([]);
-  // const [show, setShow] = useState<boolean>(false);
+  const [showModalAdd, setShowModalAdd] = useState<boolean>(false);
+  const [showModalEdit, setShowModalEdit] = useState<boolean>(false);
+  const [token, setToken] = useState<any>("");
+  const [refresh, setRefresh] = useState<number>(0);
 
   useEffect(() => {
-    getFacilityData("valid_example_token");
-  }, []);
+    setToken(sessionStorage.getItem("token"));
+    getFacilityData(sessionStorage.getItem("token"));
+  }, [refresh]);
 
-  const getFacilityData = (token: string) => {
-    fetch("http://localhost:5000/facilities", {
+  const getFacilityData = async (token: any) => {
+    await fetch("http://localhost:5000/facilities", {
       method: "GET",
       headers: {
         "Content-type": "application/json;charset=UTF-8",
@@ -25,18 +32,40 @@ const Facility = ({ history }: Props) => {
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json.data);
         setFacilities(json.data);
       })
-      .catch((err) => alert("Failed to get data booking!"));
+      .catch(() => alert("Failed to get facility!"));
   };
 
-  const deleteFacility = () => {
-    Notification.Confirmation();
+  const deleteFacility = (id: number) => {
+    Notification.Confirmation({
+      onDelete: () => {
+        fetch(`http://localhost:5000/facilities/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-type": "application/json;charset=UTF-8",
+            "X-Heltek-Token": token,
+          },
+        })
+          .then(() => {
+            Notification.Success({
+              icon: "success",
+              title: "Facility has been deleted",
+            });
+            setRefresh(refresh + 1);
+          })
+          .catch(() => alert("Failed to delete facility!"));
+      },
+    });
   };
 
-  const addFacility = () => {
-    console.log("Hello");
+  const showModalFacility = () => {
+    setShowModalAdd(!showModalAdd);
+  };
+
+  const showEditFacility = (id: any) => {
+    setShowModalEdit(!showModalEdit);
+    localStorage.setItem("id", id);
   };
 
   return (
@@ -44,14 +73,11 @@ const Facility = ({ history }: Props) => {
       <div className="flex">
         <Sidebar />
         <main className="p-8 w-full">
-          <h1 className="font-bold text-gray-400">Dashboard / Facility</h1>
-          <div className="flex">
-            <button
-              className="bg-red-500 py-2 px-4 rounded text-sm font-bold text-white my-8"
-              onClick={addFacility}
-            >
+          <h1 className="font-bold text-gray-400 mb-8">Dashboard / Facility</h1>
+          <div className="flex mb-8">
+            <Button.Primary onClick={showModalFacility} className="text-sm">
               Add Facility
-            </button>
+            </Button.Primary>
           </div>
           <div className="flex">
             <Table>
@@ -89,7 +115,7 @@ const Facility = ({ history }: Props) => {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {facilities &&
                   facilities.map((data, idx) => (
-                    <tr>
+                    <tr key={data.id}>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                         {idx + 1}
                       </td>
@@ -110,6 +136,7 @@ const Facility = ({ history }: Props) => {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            onClick={() => showEditFacility(data.id)}
                           >
                             <path
                               strokeLinecap="round"
@@ -124,7 +151,7 @@ const Facility = ({ history }: Props) => {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
-                            onClick={deleteFacility}
+                            onClick={() => deleteFacility(data.id)}
                           >
                             <path
                               strokeLinecap="round"
@@ -141,8 +168,123 @@ const Facility = ({ history }: Props) => {
             </Table>
           </div>
         </main>
+        {showModalAdd ? (
+          <ActionFacility closeModal={showModalFacility} action="add" />
+        ) : (
+          ""
+        )}
+        {showModalEdit ? (
+          <ActionFacility closeModal={showEditFacility} action="edit" />
+        ) : (
+          ""
+        )}
       </div>
     </>
+  );
+};
+
+export const ActionFacility = (props: any) => {
+  const [name, setName] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [type, setType] = useState<string>("");
+
+  const token: any = sessionStorage.getItem("token");
+  const id: any = localStorage.getItem("id");
+  const { action }: any = props;
+
+  useEffect(() => {
+    console.log(action);
+    if (action === "edit") {
+      getFacilityById(id);
+    }
+  }, []);
+
+  const onSubmit = (e: any) => {
+    e.preventDefault();
+    fetch(
+      `http://localhost:5000/facilities${action === "edit" ? `/${id}` : ""}`,
+      {
+        method: action === "add" ? "POST" : "PUT",
+        headers: {
+          "Content-type": "application/json;charset=UTF-8",
+          "X-Heltek-Token": token,
+        },
+        body: JSON.stringify({
+          name,
+          address,
+          type,
+        }),
+      }
+    )
+      .then((response) => response.json())
+      .then((json) => {
+        console.log(json.data);
+        Notification.Success({
+          icon: "success",
+          title: "New Facility has been added!",
+        });
+      })
+      .catch(() => alert("Failed to add facility!"));
+  };
+
+  const getFacilityById = async (id: string) => {
+    console.log("masuk sini");
+    await fetch(`http://localhost:5000/facilities/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json;charset=UTF-8",
+        "X-Heltek-Token": token,
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        console.log(json.data);
+      })
+      .catch(() => alert("Failed to get facility!"));
+  };
+
+  return (
+    <Modal closeModal={props.closeModal}>
+      <form className="text-sm" onSubmit={(e) => onSubmit(e)}>
+        <div className="mb-4">
+          <Form.Input
+            label="Facility Name"
+            name="name"
+            placeholder="Facility Name"
+            onChange={(e: any) => setName(e.target.value)}
+          />
+        </div>
+        <div className="mb-4">
+          <Form.Input
+            name="address"
+            placeholder="Address"
+            onChange={(e: any) => setAddress(e.target.value)}
+          />
+        </div>
+        <div className="mb-4">
+          <div className="font-bold mb-2 text-gray-600">Facility Type</div>
+          <div className="flex">
+            <div className="mr-8">
+              <Form.Radio
+                name="type"
+                defaultValue="hospital"
+                label="Hospital"
+                onChange={(e: any) => setType(e.target.value)}
+              />
+            </div>
+            <Form.Radio
+              name="type"
+              defaultValue="clinic"
+              label="Clinic"
+              onChange={(e: any) => setType(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-10 mb-4 flex justify-end w-full">
+          <Button.Primary>Submit</Button.Primary>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

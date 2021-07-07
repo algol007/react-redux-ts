@@ -9,25 +9,18 @@ export const Success = (props: any) => {
   });
 };
 
-export const Confirmation = () => {
+export const Confirmation = (props: any) => {
   Swal.fire({
     title: "Are you sure?",
-    text: "You will not be able to recover this imaginary file!",
+    text: "You will delete this facility!",
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "Yes, delete it!",
-    cancelButtonText: "No, keep it",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, delete!",
   }).then((result) => {
     if (result.isConfirmed) {
-      Success({
-        icon: "success",
-        title: "Facility has been deleted!",
-      });
-    } else if (result.dismiss) {
-      Success({
-        icon: "error",
-        title: "Canceled",
-      });
+      props.onDelete();
     }
   });
 };

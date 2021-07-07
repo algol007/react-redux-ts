@@ -3,21 +3,16 @@ import { useHistory } from "react-router-dom";
 
 const Sidebar = () => {
   const history = useHistory();
+  const token: any = sessionStorage.getItem("token");
 
   const onClickLogout = (e: any) => {
     e.preventDefault();
-    const _data = {
-      email: "john@gmail.com",
-      password: "password",
-      token: "valid_example_token",
-    };
 
     fetch("http://localhost:5000/auth/logout", {
       method: "POST",
-      body: JSON.stringify(_data),
       headers: {
         "Content-type": "application/json;charset=UTF-8",
-        "X-Heltek-Token": "valid_example_token",
+        "X-Heltek-Token": token,
       },
     })
       .then((response) => response.json())
