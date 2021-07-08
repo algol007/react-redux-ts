@@ -5,17 +5,18 @@ import Dashboard from "../pages/dashboard";
 import Facility from "../pages/facility";
 import Profile from "../pages/profile";
 import User from "../pages/user";
+import PrivateRoute from "../helpers/PrivateRoute";
 
 const Router = () => {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact={true} path="/" component={Dashboard} />
-        <Route path="/facility" component={Facility} />
-        <Route path="/booking" component={Booking} />
-        <Route path="/user" component={User} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/auth/login" component={Login} />
+        <PrivateRoute exact path="/" component={Dashboard} />
+        <PrivateRoute exact path="/facility" component={Facility} />
+        <PrivateRoute exact path="/booking" component={Booking} />
+        <PrivateRoute exact path="/user" component={User} />
+        <PrivateRoute exact path="/profile" component={Profile} />
+        <Route exact path="/auth/login" component={Login} />
         {/* Not Found */}
         <Route component={() => <Redirect to="/" />} />
       </Switch>
