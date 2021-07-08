@@ -15,8 +15,10 @@ const Sidebar = () => {
         "X-Heltek-Token": token,
       },
     })
-      .then((response) => response.json())
-      .then(() => history.push("/auth/login"))
+      .then(() => {
+        sessionStorage.clear();
+        history.push("/auth/login");
+      })
       .catch((err) => console.log(err));
   };
 
