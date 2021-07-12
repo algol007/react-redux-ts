@@ -45,8 +45,8 @@ const Sidebar = () => {
       </div>
       <div className="flex flex-col">
         <Submenu page="Dashboard" route="dashboard" />
-        <Submenu page="Facility" route="facility" />
         <Submenu page="Booking" route="booking" />
+        <Submenu page="Facility" route="facility" />
         <Submenu page="User" route="user" />
         <Submenu page="Profile" route="profile" />
         <div

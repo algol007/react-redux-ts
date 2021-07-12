@@ -6,7 +6,13 @@ import * as Button from "../../components/Button";
 import * as Form from "../../components/Form";
 import { Modal } from "../../components/Modal";
 import * as Notification from "../../components/Notification";
-// import { getFacilities } from "../../store/facility/actions";
+import {
+  createFacility,
+  getAllFacilities,
+  getFacilityById,
+  updateFacility,
+  deleteFacility,
+} from "../api/facility";
 
 interface Props extends RouteComponentProps {}
 
@@ -14,47 +20,29 @@ const Facility = ({ history }: Props) => {
   const [facilities, setFacilities] = useState<any[]>([]);
   const [showModalAdd, setShowModalAdd] = useState<boolean>(false);
   const [showModalEdit, setShowModalEdit] = useState<boolean>(false);
-  const [token, setToken] = useState<any>("");
   const [refresh, setRefresh] = useState<number>(0);
+  const token: any = sessionStorage.getItem("token");
 
   useEffect(() => {
-    setToken(sessionStorage.getItem("token"));
-    getFacilityData(sessionStorage.getItem("token"));
+    getAllFacilities({
+      token: token,
+      result: (res: any) => {
+        setFacilities(res.data);
+      },
+    });
   }, [refresh]);
 
-  const getFacilityData = async (token: any) => {
-    await fetch("http://localhost:5000/facilities", {
-      method: "GET",
-      headers: {
-        "Content-type": "application/json;charset=UTF-8",
-        "X-Heltek-Token": token,
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setFacilities(json.data);
-      })
-      .catch(() => alert("Failed to get facility!"));
-  };
-
-  const deleteFacility = (id: number) => {
+  const onDeleteFacility = (id: string) => {
     Notification.Confirmation({
       onDelete: () => {
-        fetch(`http://localhost:5000/facilities/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-type": "application/json;charset=UTF-8",
-            "X-Heltek-Token": token,
-          },
-        })
-          .then(() => {
-            Notification.Success({
-              icon: "success",
-              title: "Facility has been deleted",
-            });
+        deleteFacility({
+          id: id,
+          token: token,
+          result: (res: any) => {
+            console.log(res);
             setRefresh(refresh + 1);
-          })
-          .catch(() => alert("Failed to delete facility!"));
+          },
+        });
       },
     });
   };
@@ -151,7 +139,7 @@ const Facility = ({ history }: Props) => {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
-                            onClick={() => deleteFacility(data.id)}
+                            onClick={() => onDeleteFacility(data.id)}
                           >
                             <path
                               strokeLinecap="round"
@@ -169,7 +157,14 @@ const Facility = ({ history }: Props) => {
           </div>
         </main>
         {showModalAdd ? (
-          <ActionFacility closeModal={showModalFacility} action="add" />
+          <ActionFacility
+            closeModal={showModalFacility}
+            action="add"
+            onRefresh={() => {
+              setRefresh(refresh + 1);
+              setShowModalAdd(false);
+            }}
+          />
         ) : (
           ""
         )}
@@ -201,56 +196,51 @@ export const ActionFacility = (props: any) => {
 
   useEffect(() => {
     if (action === "edit") {
-      getFacilityById(id);
+      getFacility(id);
     }
-  }, []);
+  }, [id]);
 
   const onSubmit = (e: any) => {
     e.preventDefault();
-    fetch(
-      `http://localhost:5000/facilities${action === "edit" ? `/${id}` : ""}`,
-      {
-        method: action === "add" ? "POST" : "PUT",
-        headers: {
-          "Content-type": "application/json;charset=UTF-8",
-          "X-Heltek-Token": token,
+    if (action === "edit") {
+      updateFacility({
+        id: id,
+        token: token,
+        body: {
+          name: name,
+          address: address,
+          type: type,
         },
-        body: JSON.stringify({
-          name,
-          address,
-          type,
-        }),
-      }
-    )
-      .then((response) => response.json())
-      .then(() => {
-        Notification.Success({
-          icon: "success",
-          title:
-            action === "edit"
-              ? "Facility updated!"
-              : "New Facility has been added!",
-        });
-        props.onRefresh();
-      })
-      .catch(() => alert("Failed to add/edit facility!"));
+        result: (res: any) => {
+          console.log(res);
+          props.onRefresh();
+        },
+      });
+    } else {
+      createFacility({
+        id: id,
+        token: token,
+        body: {
+          name: name,
+          address: address,
+          type: type,
+        },
+        result: (res: any) => {
+          console.log(res);
+          props.onRefresh();
+        },
+      });
+    }
   };
 
-  const getFacilityById = async (id: string) => {
-    await fetch(`http://localhost:5000/facilities/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-type": "application/json;charset=UTF-8",
-        "X-Heltek-Token": token,
+  const getFacility = async (id: string) => {
+    getFacilityById({
+      id: id,
+      token: token,
+      result: (res: any) => {
+        console.log(res);
       },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setName(json.facility.name);
-        setAddress(json.facility.address);
-        setType(json.facility.type);
-      })
-      .catch(() => alert("Failed to get facility!"));
+    });
   };
 
   return (
