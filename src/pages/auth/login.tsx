@@ -45,6 +45,7 @@ const Login = () => {
                 placeholder="Email"
                 className="border-2 w-full p-2 outline-none focus:border-red-600"
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
             <div className="mb-4 w-full">
@@ -53,6 +54,7 @@ const Login = () => {
                 placeholder="Password"
                 className="border-2 w-full p-2 outline-none focus:border-red-600"
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
             <div className="mb-4 w-full">

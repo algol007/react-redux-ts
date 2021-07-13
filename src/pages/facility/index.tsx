@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { RouteComponentProps } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "../../components/Layout/Sidebar";
 import Table from "../../components/Table";
 import * as Button from "../../components/Button";
 import * as Form from "../../components/Form";
 import { Modal } from "../../components/Modal";
 import * as Notification from "../../components/Notification";
-// import { getFacilities } from "../../store/facility/actions";
+import * as facilityActions from "../../store/facility/actions";
+import {
+  createFacility,
+  getAllFacilities,
+  getFacilityById,
+  updateFacility,
+  deleteFacility,
+} from "../api/facility";
 
 interface Props extends RouteComponentProps {}
 
@@ -14,47 +22,48 @@ const Facility = ({ history }: Props) => {
   const [facilities, setFacilities] = useState<any[]>([]);
   const [showModalAdd, setShowModalAdd] = useState<boolean>(false);
   const [showModalEdit, setShowModalEdit] = useState<boolean>(false);
-  const [token, setToken] = useState<any>("");
+  const [pages, setPages] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(5);
+  const token: any = sessionStorage.getItem("token");
   const [refresh, setRefresh] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
+
+  const dispatch: any = useDispatch();
+  const facility = useSelector((state: any) => state.facility);
 
   useEffect(() => {
-    setToken(sessionStorage.getItem("token"));
-    getFacilityData(sessionStorage.getItem("token"));
-  }, [refresh]);
+    onGetFacilities();
+  }, [refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getFacilityData = async (token: any) => {
-    await fetch("http://localhost:5000/facilities", {
-      method: "GET",
-      headers: {
-        "Content-type": "application/json;charset=UTF-8",
-        "X-Heltek-Token": token,
+  const onGetFacilities = () => {
+    getAllFacilities({
+      token: token,
+      result: (res: any) => {
+        setCurrentPage(res.currentPage);
+        setTotalPage(res.totalPage);
+        setFacilities(res.data);
+        dispatch(facilityActions.getFacilities(res.data));
       },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setFacilities(json.data);
-      })
-      .catch(() => alert("Failed to get facility!"));
+      limit: limit,
+      page: pages,
+    });
   };
 
-  const deleteFacility = (id: number) => {
+  const onDeleteFacility = (id: string) => {
     Notification.Confirmation({
       onDelete: () => {
-        fetch(`http://localhost:5000/facilities/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-type": "application/json;charset=UTF-8",
-            "X-Heltek-Token": token,
-          },
-        })
-          .then(() => {
+        deleteFacility({
+          id: id,
+          token: token,
+          result: () => {
+            onGetFacilities();
             Notification.Success({
               icon: "success",
-              title: "Facility has been deleted",
+              title: "Facility has been deleted!",
             });
-            setRefresh(refresh + 1);
-          })
-          .catch(() => alert("Failed to delete facility!"));
+          },
+        });
       },
     });
   };
@@ -68,13 +77,41 @@ const Facility = ({ history }: Props) => {
     localStorage.setItem("id", id);
   };
 
+  const onChangeLimit = (e: any) => {
+    setLimit(e.target.value);
+    setRefresh(refresh + 1);
+  };
+
+  const onPageChange = (type: string) => {
+    if (type === "prev" && pages > 1) {
+      setPages(pages - 1);
+      setRefresh(refresh + 1);
+    } else if (pages < totalPage) {
+      setPages(pages + 1);
+      setRefresh(refresh + 1);
+    }
+  };
+
   return (
     <>
       <div className="flex">
         <Sidebar />
         <main className="p-8 w-full">
           <h1 className="font-bold text-gray-400 mb-8">Dashboard / Facility</h1>
-          <div className="flex mb-8">
+          <div className="flex justify-between items-center mb-8">
+            <div className="text-gray-400">
+              <span className="text-sm font-bold mr-4">Show</span>
+              <select
+                name="limit"
+                id="limit"
+                onChange={(e) => onChangeLimit(e)}
+                className="border-2 px-2 py-1 border-gray-400 outline-none"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
             <Button.Primary onClick={showModalFacility} className="text-sm">
               Add Facility
             </Button.Primary>
@@ -117,7 +154,7 @@ const Facility = ({ history }: Props) => {
                   facilities.map((data, idx) => (
                     <tr key={data.id}>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                        {idx + 1}
+                        {(currentPage - 1) * limit + idx + 1}
                       </td>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {data.name}
@@ -151,7 +188,7 @@ const Facility = ({ history }: Props) => {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
-                            onClick={() => deleteFacility(data.id)}
+                            onClick={() => onDeleteFacility(data.id)}
                           >
                             <path
                               strokeLinecap="round"
@@ -167,9 +204,37 @@ const Facility = ({ history }: Props) => {
               </tbody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          <div className="flex mt-6 text-gray-500 text-sm w-full items-center justify-between">
+            <div>
+              Page {currentPage} of {totalPage}
+            </div>
+            <div className="flex">
+              <div
+                className="px-4 py-1 bg-red-500 text-white font-bold border border-white cursor-pointer hover:bg-red-600"
+                onClick={() => onPageChange("prev")}
+              >
+                Prev
+              </div>
+              <div
+                className="px-4 py-1 bg-red-500 text-white font-bold border border-white cursor-pointer hover:bg-red-600"
+                onClick={() => onPageChange("next")}
+              >
+                Next
+              </div>
+            </div>
+          </div>
         </main>
         {showModalAdd ? (
-          <ActionFacility closeModal={showModalFacility} action="add" />
+          <ActionFacility
+            closeModal={showModalFacility}
+            action="add"
+            onRefresh={() => {
+              onGetFacilities();
+              setShowModalAdd(false);
+            }}
+          />
         ) : (
           ""
         )}
@@ -178,7 +243,7 @@ const Facility = ({ history }: Props) => {
             closeModal={showEditFacility}
             action="edit"
             onRefresh={() => {
-              setRefresh(refresh + 1);
+              onGetFacilities();
               setShowModalEdit(false);
             }}
           />
@@ -201,56 +266,58 @@ export const ActionFacility = (props: any) => {
 
   useEffect(() => {
     if (action === "edit") {
-      getFacilityById(id);
+      getFacility(id);
     }
-  }, []);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = (e: any) => {
     e.preventDefault();
-    fetch(
-      `http://localhost:5000/facilities${action === "edit" ? `/${id}` : ""}`,
-      {
-        method: action === "add" ? "POST" : "PUT",
-        headers: {
-          "Content-type": "application/json;charset=UTF-8",
-          "X-Heltek-Token": token,
+    if (action === "edit") {
+      updateFacility({
+        id: id,
+        token: token,
+        body: {
+          name: name,
+          address: address,
+          type: type,
         },
-        body: JSON.stringify({
-          name,
-          address,
-          type,
-        }),
-      }
-    )
-      .then((response) => response.json())
-      .then(() => {
-        Notification.Success({
-          icon: "success",
-          title:
-            action === "edit"
-              ? "Facility updated!"
-              : "New Facility has been added!",
-        });
-        props.onRefresh();
-      })
-      .catch(() => alert("Failed to add/edit facility!"));
+        result: () => {
+          props.onRefresh();
+          Notification.Success({
+            icon: "success",
+            title: "Facility has been updated!",
+          });
+        },
+      });
+    } else {
+      createFacility({
+        id: id,
+        token: token,
+        body: {
+          name: name,
+          address: address,
+          type: type,
+        },
+        result: () => {
+          props.onRefresh();
+          Notification.Success({
+            icon: "success",
+            title: "Facility has been created!",
+          });
+        },
+      });
+    }
   };
 
-  const getFacilityById = async (id: string) => {
-    await fetch(`http://localhost:5000/facilities/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-type": "application/json;charset=UTF-8",
-        "X-Heltek-Token": token,
+  const getFacility = async (id: string) => {
+    getFacilityById({
+      id: id,
+      token: token,
+      result: (res: any) => {
+        setName(res.facility.name);
+        setAddress(res.facility.address);
       },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        setName(json.facility.name);
-        setAddress(json.facility.address);
-        setType(json.facility.type);
-      })
-      .catch(() => alert("Failed to get facility!"));
+    });
   };
 
   return (

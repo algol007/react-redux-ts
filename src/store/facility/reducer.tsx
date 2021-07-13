@@ -1,16 +1,14 @@
-import * as types from "./action-types"
+import * as types from "./action-types";
 
-const initialState = [{
-  id: 1, name: "Rumah Sakit A", address: "Jalan Manonda", type: "Klinik"
-}]
+const initialState: any = [];
 
-const facilityReducer = (state = initialState, action:any) => {
-  switch(action.type) {
+const facilityReducer = (state = initialState, action: any) => {
+  switch (action.type) {
     case types.GET_FACILITIES:
-      return [...state, ...action.payload.facility]
+      return action.payload;
     default:
-      return state
+      return state;
   }
-}
+};
 
-export default facilityReducer
+export default facilityReducer;
