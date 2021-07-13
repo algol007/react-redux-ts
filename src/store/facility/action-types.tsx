@@ -1,1 +1,1 @@
-export const GET_FACILITIES = "facility/GET_FACILITIES";
+export const GET_FACILITIES = "GET_FACILITIES";

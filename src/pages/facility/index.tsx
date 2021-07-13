@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { RouteComponentProps } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "../../components/Layout/Sidebar";
 import Table from "../../components/Table";
 import * as Button from "../../components/Button";
 import * as Form from "../../components/Form";
 import { Modal } from "../../components/Modal";
 import * as Notification from "../../components/Notification";
+import * as facilityActions from "../../store/facility/actions";
 import {
   createFacility,
   getAllFacilities,
@@ -20,17 +22,33 @@ const Facility = ({ history }: Props) => {
   const [facilities, setFacilities] = useState<any[]>([]);
   const [showModalAdd, setShowModalAdd] = useState<boolean>(false);
   const [showModalEdit, setShowModalEdit] = useState<boolean>(false);
-  const [refresh, setRefresh] = useState<number>(0);
+  const [pages, setPages] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(5);
   const token: any = sessionStorage.getItem("token");
+  const [refresh, setRefresh] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
+
+  const dispatch: any = useDispatch();
+  const facility = useSelector((state: any) => state.facility);
 
   useEffect(() => {
+    onGetFacilities();
+  }, [refresh]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onGetFacilities = () => {
     getAllFacilities({
       token: token,
       result: (res: any) => {
+        setCurrentPage(res.currentPage);
+        setTotalPage(res.totalPage);
         setFacilities(res.data);
+        dispatch(facilityActions.getFacilities(res.data));
       },
+      limit: limit,
+      page: pages,
     });
-  }, [refresh]);
+  };
 
   const onDeleteFacility = (id: string) => {
     Notification.Confirmation({
@@ -38,9 +56,12 @@ const Facility = ({ history }: Props) => {
         deleteFacility({
           id: id,
           token: token,
-          result: (res: any) => {
-            console.log(res);
-            setRefresh(refresh + 1);
+          result: () => {
+            onGetFacilities();
+            Notification.Success({
+              icon: "success",
+              title: "Facility has been deleted!",
+            });
           },
         });
       },
@@ -56,13 +77,41 @@ const Facility = ({ history }: Props) => {
     localStorage.setItem("id", id);
   };
 
+  const onChangeLimit = (e: any) => {
+    setLimit(e.target.value);
+    setRefresh(refresh + 1);
+  };
+
+  const onPageChange = (type: string) => {
+    if (type === "prev" && pages > 1) {
+      setPages(pages - 1);
+      setRefresh(refresh + 1);
+    } else if (pages < totalPage) {
+      setPages(pages + 1);
+      setRefresh(refresh + 1);
+    }
+  };
+
   return (
     <>
       <div className="flex">
         <Sidebar />
         <main className="p-8 w-full">
           <h1 className="font-bold text-gray-400 mb-8">Dashboard / Facility</h1>
-          <div className="flex mb-8">
+          <div className="flex justify-between items-center mb-8">
+            <div className="text-gray-400">
+              <span className="text-sm font-bold mr-4">Show</span>
+              <select
+                name="limit"
+                id="limit"
+                onChange={(e) => onChangeLimit(e)}
+                className="border-2 px-2 py-1 border-gray-400 outline-none"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
             <Button.Primary onClick={showModalFacility} className="text-sm">
               Add Facility
             </Button.Primary>
@@ -105,7 +154,7 @@ const Facility = ({ history }: Props) => {
                   facilities.map((data, idx) => (
                     <tr key={data.id}>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                        {idx + 1}
+                        {(currentPage - 1) * limit + idx + 1}
                       </td>
                       <td className="pr-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {data.name}
@@ -155,13 +204,34 @@ const Facility = ({ history }: Props) => {
               </tbody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          <div className="flex mt-6 text-gray-500 text-sm w-full items-center justify-between">
+            <div>
+              Page {currentPage} of {totalPage}
+            </div>
+            <div className="flex">
+              <div
+                className="px-4 py-1 bg-red-500 text-white font-bold border border-white cursor-pointer hover:bg-red-600"
+                onClick={() => onPageChange("prev")}
+              >
+                Prev
+              </div>
+              <div
+                className="px-4 py-1 bg-red-500 text-white font-bold border border-white cursor-pointer hover:bg-red-600"
+                onClick={() => onPageChange("next")}
+              >
+                Next
+              </div>
+            </div>
+          </div>
         </main>
         {showModalAdd ? (
           <ActionFacility
             closeModal={showModalFacility}
             action="add"
             onRefresh={() => {
-              setRefresh(refresh + 1);
+              onGetFacilities();
               setShowModalAdd(false);
             }}
           />
@@ -173,7 +243,7 @@ const Facility = ({ history }: Props) => {
             closeModal={showEditFacility}
             action="edit"
             onRefresh={() => {
-              setRefresh(refresh + 1);
+              onGetFacilities();
               setShowModalEdit(false);
             }}
           />
@@ -198,7 +268,7 @@ export const ActionFacility = (props: any) => {
     if (action === "edit") {
       getFacility(id);
     }
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = (e: any) => {
     e.preventDefault();
@@ -211,9 +281,12 @@ export const ActionFacility = (props: any) => {
           address: address,
           type: type,
         },
-        result: (res: any) => {
-          console.log(res);
+        result: () => {
           props.onRefresh();
+          Notification.Success({
+            icon: "success",
+            title: "Facility has been updated!",
+          });
         },
       });
     } else {
@@ -225,9 +298,12 @@ export const ActionFacility = (props: any) => {
           address: address,
           type: type,
         },
-        result: (res: any) => {
-          console.log(res);
+        result: () => {
           props.onRefresh();
+          Notification.Success({
+            icon: "success",
+            title: "Facility has been created!",
+          });
         },
       });
     }
@@ -238,7 +314,8 @@ export const ActionFacility = (props: any) => {
       id: id,
       token: token,
       result: (res: any) => {
-        console.log(res);
+        setName(res.facility.name);
+        setAddress(res.facility.address);
       },
     });
   };
